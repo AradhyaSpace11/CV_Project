@@ -5,10 +5,10 @@ from collections import deque
 
 def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.4, device=0):
     """
-    Real-time detection of road objects with braking based on total area increase.
+    Real-time detection of road objects within the middle portion of the video frame.
     """
     ROAD_CLASSES = {0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 5: 'bus', 7: 'truck', 9: 'traffic light', 11: 'stop sign', 12: 'parking meter'}
-    total_area_history = deque(maxlen=4)  # Store total area for the last 4 frames
+    total_area_history = deque(maxlen=10)  # Store total area for the last 10 frames
     last_brake_time = 0
     braking_duration = 3
     area_increase_threshold = 1.2  # Adjust this threshold as needed (e.g., 1.5, 2.0)
@@ -21,6 +21,12 @@ def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.4, device=0):
 
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        middle_left = frame_width // 3
+        middle_right = 2 * frame_width // 3
 
         fps = 0
         frame_count = 0
@@ -38,7 +44,14 @@ def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.4, device=0):
             current_time = time.time()
             is_braking = (current_time - last_brake_time) < braking_duration
 
-            results = model.predict(source=frame, conf=conf_thresh, verbose=False)
+            # Draw vertical lines to define the middle region
+            cv2.line(frame, (middle_left, 0), (middle_left, frame_height), (255, 0, 0), 2)
+            cv2.line(frame, (middle_right, 0), (middle_right, frame_height), (255, 0, 0), 2)
+
+            # Extract the middle portion of the frame for detection
+            middle_frame = frame[:, middle_left:middle_right]
+
+            results = model.predict(source=middle_frame, conf=conf_thresh, verbose=False)
             annotated_frame = frame.copy()
 
             total_current_area = 0  # Initialize total area for the current frame
@@ -48,6 +61,11 @@ def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.4, device=0):
                 cls_id = int(box.cls[0])
                 if cls_id in ROAD_CLASSES:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
+
+                    # Adjust bounding box coordinates to the full frame's context
+                    x1 += middle_left
+                    x2 += middle_left
+
                     box_area = (x2 - x1) * (y2 - y1)
                     total_current_area += box_area
 
@@ -65,7 +83,7 @@ def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.4, device=0):
 
             total_area_history.append(total_current_area)  # Add current total area to history
 
-            if len(total_area_history) == 4:  # Check only when we have 4 frames of history
+            if len(total_area_history) == 10:  # Check only when we have 10 frames of history
                 initial_total_area = total_area_history[0]
                 current_total_area = total_area_history[-1]
                 if initial_total_area > 0: # Avoid division by zero
