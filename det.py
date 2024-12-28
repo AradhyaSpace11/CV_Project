@@ -3,7 +3,7 @@ import cv2
 import time
 from collections import deque
 
-def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.4, device=0):
+def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.3, device=0):
     """
     Real-time detection of road objects within the middle portion of the video frame.
     """
