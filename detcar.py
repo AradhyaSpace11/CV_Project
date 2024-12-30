@@ -3,7 +3,7 @@ import cv2
 import time
 from collections import deque
 
-def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.37, device=0):
+def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.35, device=0):
     """
     Real-time detection of cars within the middle portion of the video frame.
     """
@@ -11,7 +11,7 @@ def detect_road_objects(model_path='yolov8n.pt', conf_thresh=0.37, device=0):
     total_area_history = deque(maxlen=10)  # Store total area for the last 10 frames
     last_brake_time = 0
     braking_duration = 3
-    area_increase_threshold = 1.45  # Adjust this threshold as needed (e.g., 1.5, 2.0)
+    area_increase_threshold = 1.55  # Adjust this threshold as needed (e.g., 1.5, 2.0)
 
     try:
         model = YOLO(model_path)
