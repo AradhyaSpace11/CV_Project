@@ -18,7 +18,7 @@ import cv2
 import time
 from collections import deque
 
-def detect_objects(model_path='yolov8n.pt', conf_thresh=0.35, device=0, to_detect=[2]):
+def detect_objects(model_path='yolov8n.pt', conf_thresh=0.55, device=0, to_detect=[2]):
     """
     Real-time detection of specified objects based on class IDs in the `to_detect` array.
     """
