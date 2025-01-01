@@ -18,14 +18,14 @@ import cv2
 import time
 from collections import deque
 
-def detect_objects(model_path='yolov8n.pt', conf_thresh=0.55, device=0, to_detect=[2]):
+def detect_objects(model_path='yolov8n.pt', conf_thresh=0.35, device=0, to_detect=[2]):
     """
     Real-time detection of specified objects based on class IDs in the `to_detect` array.
     """
     total_area_history = deque(maxlen=10)  # Store total area for the last 10 frames
     last_brake_time = 0
     braking_duration = 3
-    area_increase_threshold = 1.55  # Adjust this threshold as needed (e.g., 1.5, 2.0)
+    area_increase_threshold = 1.50  # Adjust this threshold as needed (e.g., 1.5, 2.0)
 
     try:
         model = YOLO(model_path)
