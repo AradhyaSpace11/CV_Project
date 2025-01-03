@@ -135,4 +135,3 @@ def detect_objects(model_path='yolov8n.pt', conf_thresh=0.35, device=0, to_detec
 
 if __name__ == "__main__":
     detect_objects(to_detect=[2, 7])  # Detect cars (class ID 2) and trucks (class ID 7)
- d
