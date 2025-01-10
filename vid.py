@@ -10,7 +10,7 @@ def detect_objects(model_path='yolo11n.pt', conf_thresh=0.35, video_path='video.
     total_area_history = deque(maxlen=10)  # Store total area for the last 10 frames
     last_brake_time = 0
     braking_duration = 3
-    area_increase_threshold = 1.50  # Adjust this threshold as needed (e.g., 1.5, 2.0)
+    area_increase_threshold = 1.21  # Adjust this threshold as needed (e.g., 1.5, 2.0)
 
     try:
         model = YOLO(model_path)
