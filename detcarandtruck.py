@@ -1,24 +1,9 @@
-# Class IDs for YOLOv8 (COCO dataset):
-# 0: person, 1: bicycle, 2: car, 3: motorcycle, 4: airplane, 5: bus, 6: train, 7: truck,
-# 8: boat, 9: traffic light, 10: fire hydrant, 11: stop sign, 12: parking meter, 13: bench,
-# 14: bird, 15: cat, 16: dog, 17: horse, 18: sheep, 19: cow, 20: elephant, 21: bear,
-# 22: zebra, 23: giraffe, 24: backpack, 25: umbrella, 26: handbag, 27: tie, 28: suitcase,
-# 29: frisbee, 30: skis, 31: snowboard, 32: sports ball, 33: kite, 34: baseball bat,
-# 35: baseball glove, 36: skateboard, 37: surfboard, 38: tennis racket, 39: bottle,
-# 40: wine glass, 41: cup, 42: fork, 43: knife, 44: spoon, 45: bowl, 46: banana,
-# 47: apple, 48: sandwich, 49: orange, 50: broccoli, 51: carrot, 52: hot dog,
-# 53: pizza, 54: donut, 55: cake, 56: chair, 57: couch, 58: potted plant, 59: bed,
-# 60: dining table, 61: toilet, 62: TV, 63: laptop, 64: mouse, 65: remote,
-# 66: keyboard, 67: cell phone, 68: microwave, 69: oven, 70: toaster, 71: sink,
-# 72: refrigerator, 73: book, 74: clock, 75: vase, 76: scissors, 77: teddy bear,
-# 78: hair drier, 79: toothbrush
-
 from ultralytics import YOLO
 import cv2
 import time
 from collections import deque
 
-def detect_objects(model_path='yolov8n.pt', conf_thresh=0.35, device=0, to_detect=[2]):
+def detect_objects(model_path='yolo11n.pt', conf_thresh=0.35, device=0, to_detect=[2]):
     """
     Real-time detection of specified objects based on class IDs in the `to_detect` array.
     """
@@ -65,34 +50,34 @@ def detect_objects(model_path='yolov8n.pt', conf_thresh=0.35, device=0, to_detec
             # Extract the middle portion of the frame for detection
             middle_frame = frame[:, middle_left:middle_right]
 
-            results = model.predict(source=middle_frame, conf=conf_thresh, verbose=False)
+            results = model(middle_frame, conf=conf_thresh, verbose=False)
             annotated_frame = frame.copy()
 
             total_current_area = 0  # Initialize total area for the current frame
 
-            result = results[0]
-            for box in result.boxes:
-                cls_id = int(box.cls[0])
-                if cls_id in to_detect:
-                    x1, y1, x2, y2 = map(int, box.xyxy[0])
+            if len(results) > 0:  # Check if there are any results
+                boxes = results[0].boxes  # Get boxes from first result
+                for box in boxes:
+                    cls_id = int(box.cls[0])  # Get class ID
+                    if cls_id in to_detect:
+                        # Get coordinates and adjust to full frame
+                        x1, y1, x2, y2 = map(int, box.xyxy[0])
+                        x1 += middle_left
+                        x2 += middle_left
 
-                    # Adjust bounding box coordinates to the full frame's context
-                    x1 += middle_left
-                    x2 += middle_left
+                        box_area = (x2 - x1) * (y2 - y1)
+                        total_current_area += box_area
 
-                    box_area = (x2 - x1) * (y2 - y1)
-                    total_current_area += box_area
+                        color = (0, 255, 0)  # Green for detected objects
 
-                    color = (0, 255, 0)  # Green for detected objects
+                        cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
+                        conf = float(box.conf[0])
+                        label_text = f"Class {cls_id} {conf:.2f} Area:{box_area / 1000:.1f}k"
+                        label_size = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)[0]
+                        cv2.rectangle(annotated_frame, (x1, y1 - 20), (x1 + label_size[0], y1), color, -1)
+                        cv2.putText(annotated_frame, label_text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
 
-                    cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
-                    conf = float(box.conf[0])
-                    label_text = f"Class {cls_id} {conf:.2f} Area:{box_area / 1000:.1f}k"
-                    label_size = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)[0]
-                    cv2.rectangle(annotated_frame, (x1, y1 - 20), (x1 + label_size[0], y1), color, -1)
-                    cv2.putText(annotated_frame, label_text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-
-            total_area_history.append(total_current_area)  # Add current total area to history
+            total_area_history.append(total_current_area)
 
             if len(total_area_history) == 10:  # Check only when we have 10 frames of history
                 initial_total_area = total_area_history[0]
