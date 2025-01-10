@@ -3,7 +3,7 @@ import cv2
 import time
 from collections import deque
 
-def detect_objects(model_path='yolo11n.pt', conf_thresh=0.35, video_path='video.mp4', to_detect=[2]):
+def detect_objects(model_path='yolo11n.pt', conf_thresh=0.35, video_path='videos/video.mp4', to_detect=[2]):
     """
     Real-time detection of specified objects based on class IDs in the `to_detect` array.
     """
